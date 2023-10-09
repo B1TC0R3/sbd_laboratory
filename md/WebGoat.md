@@ -286,19 +286,33 @@ databasepassword
 
 ![Crypto Basics Task 3](./.img/crypt_basics_t3.png)
 
-When storing passwords using XOR, the key is repeated until it fits the length of the input.
-This lengthened key is then XORed with this input to create the cipher.
-
-XOR is a very simple encoding that simply compares both strings bit by bit and outputs `1` if the bits are *not* equal and `0` if they are.
-
-| Input Bit | Key Bit | Output Bit |
-|-----------|---------|------------|
-| 0         | 0       | 0          |
-| 0         | 1       | 1          |
-| 1         | 0       | 1          |
-| 1         | 1       | 0          |
-
 ### Task 4
+
+The easiest solution is to use a hash database to simply look up what tha original text is.
+In this case, [Crackstation.net](https://crackstation.net/) was used.
+
+![Crypto Basics Task 4](./.img/crypt_basics_t4.png)
+
+Alternatively, the tool `john` can be used to crack the hash locally.
+
+```bash
+echo "21232F297A57A5A743894A0E4A801FC3" > hash_1
+john hash_1 --wordlist=/usr/share/wordlists/rockyou.txt --format=raw-md5
+
+echo "5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8" > hash_2
+john hash_2 --wordlist=/usr/share/wordlists/rockyou.txt --format=raw-sha256
+```
+
+The hashes should decode to the following two words:
+
+```text
+admin
+password
+```
+
+### Task 5
+
+No asnwer needed.
 
 # (A1) Injection
 

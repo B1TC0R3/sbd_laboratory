@@ -179,6 +179,116 @@ XOR is a very simple encoding that simply compares both strings bit by bit and o
 | 1         | 0       | 1          |
 | 1         | 1       | 0          |
 
+Becaues of this, if a XOR encoded string is XORed with the same key again, it will be decoded.
+
 ## Task 13
 
+XOR can be attacked in multiple ways.
+Most importantly, any secret key can be reconstructed from the plaintext and cipher, simply by XORing
+them together.
+Additionally, since XOR ciphers repeat a key in order to stretch it to the size of the plaintext, multiple keys are valid for the same cipher.
 
+## Task 14
+
+The script can be found on my Github as well: [xor\_plaintext\_attack - Github](https://github.com/B1TC0R3/xor_plaintext_attack)
+
+```python
+# Copyright 2023 Thomas Gingele https://github.com/B1TC0R3
+import argparse
+
+
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog='XOR Plaintext Cracker',
+        description='This script will attempt to find the secret key of a XOR encoded string by performing a plaintext attack',
+        epilog='Copyright 2023 Thomas Gingele https://github.com/B1TC0R3'
+    )
+
+    parser.add_argument(
+        '-c',
+        '--cipher',
+        help='The XOR encoded string',
+        required=True
+    )
+
+    parser.add_argument(
+        '-p',
+        '--plaintext',
+        help='The plaintext string',
+        required=True
+    )
+
+    return parser.parse_args()
+
+
+def xor(cipher, key) -> bytearray:
+    return bytearray(
+        a ^ b for a, b in zip(*map(bytearray, [cipher, key]))
+    )
+
+
+def main():
+    args      = get_args()
+    cipher    = args.cipher.encode('utf-8')
+    plaintext = args.plaintext.encode('utf-8')
+    key       = str(xor(cipher, plaintext), 'utf-8')
+
+    print(key)
+
+
+if __name__ == '__main__':
+    main()
+```
+
+## Task 15
+
+### Crypto Basics Section 3
+
+The following string needs to be decoded:
+
+```text
+{xor}Oz4rPj0+LDovPiwsKDAtOw==
+```
+
+Apart from the `{xor}`, this seems to be encoded with `base64`.
+Using the command from *Section 2*, it decodes to:
+
+```text
+;>+>=>,:/>,,(0-;
+```
+
+The `{xor}` may be a hint to how this string is encoded.
+It is possible to brute force XOR encoded strings using [CyberChef - Github.io](https://gchq.github.io/CyberChef/).
+
+The string decodes to:
+
+```text
+databasepassword
+```
+
+![Crypto Basics Task 3](./.img/crypt_basics_t3.png)
+
+Alternatively, the script from **Task 14** can be used here.
+
+## Task 16
+
+There are two approches to cracking hashes:
+
+1. Looking up the hash in an online database.
+This method only works on non-salted hashes and is also ineffective against more modern
+hashing methods like `bcrypt`.
+
+2. Cracking the hash with a wordlist or rainbowtable.
+With this approach, it may be easier to get a result but the success rate is higher.
+It is possible to attack salted hashes using rainbow tables and the hash method does not matter either.
+The biggest downside of cracking a hash like this is the time required to finish the computation,
+as brute forcing tends to be rather slow.
+
+## Task 17
+
+The first hash is a `MD5` hash, the second one a `SHA256` hash.
+
+When locally cracking the hash using `john`, both take less then a second to crack.
+Using [crackstation.net](https://crackstation.net/), cracking both hashes at once takes *446 milliseconds*. A large portion of this time likely is lost transmitting the request and response.
+
+## Task 18
