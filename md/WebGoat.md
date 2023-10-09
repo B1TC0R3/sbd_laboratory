@@ -314,6 +314,20 @@ password
 
 No asnwer needed.
 
+### Task 6
+
+The modulus can be read from the private key file like this:
+
+```bash
+openssl rsa -in myprivate.pem -noout -modulus 
+```
+
+To sign this string, I came up with this fancy oneliner:
+
+```bash
+openssl rsa -in myprivate.pem -noout -modulus | cut -d '=' -f 2 | tr -d '\n' | openssl dgst -sha256 -sign myprivate.pem | base64
+```
+
 # (A1) Injection
 
 ## SQL Injection (intro)

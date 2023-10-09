@@ -292,3 +292,163 @@ When locally cracking the hash using `john`, both take less then a second to cra
 Using [crackstation.net](https://crackstation.net/), cracking both hashes at once takes *446 milliseconds*. A large portion of this time likely is lost transmitting the request and response.
 
 ## Task 18
+
+The final version of this script can be found here: [sbd\_lab\_1\_t1820.py - Github.com](https://github.com/B1TC0R3/sbd_lab_1_t1820/blob/main/sbd_lab_1_t1820.py) 
+
+```python
+# Copyright 2023 Thomas Gingele https://github.com/B1TC0R3
+import argparse
+from Crypto.PublicKey import RSA
+
+
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog='Solver for SBD Laboratory Task 18/20',
+        epilog='Copyright 2023 Thomas Gingele https://github.com/B1TC0R3'
+    )
+
+    parser.add_argument(
+        '-priv',
+        '--private-key',
+        help='a RSA private key file',
+        required=True
+    )
+
+    return parser.parse_args()
+
+
+def openssl_format(value: int) -> str:
+    return hex(value)[2:].upper()
+
+
+def main():
+    args        = get_args()
+    private_key = None
+    public_key = None
+
+    with open(args.private_key) as key_file:
+        private_key = RSA.import_key(key_file.read())
+
+    # Remove prepending '0x' from hex string and uppercase it to match OpenSSL output
+    modulus   = openssl_format(private_key.n)
+    public_exponent = openssl_format(private_key.d)
+    private_exponent = openssl_format(private_key.e)
+
+    print(f"MODULUS: {modulus}\n")
+    print(f"PUBLIC EXPONENT: {public_exponent}\n")
+    print(f"PRIVATE EXPONENT: {private_exponent}\n")
+
+
+if __name__ == '__main__':
+    main()
+```
+
+## Task 19
+
+This task can be finished with the command:
+
+```bash
+openssl rsa -in myprivate.pem -pubout -out mypublic.key
+```
+
+## Task 20
+
+The script can also be found here: [sbd\_lab\_1\_t1820.py - Github.com](https://github.com/B1TC0R3/sbd_lab_1_t1820/blob/main/sbd_lab_1_t1820.py)
+
+```python
+# Copyright 2023 Thomas Gingele https://github.com/B1TC0R3
+import argparse
+import base64
+from Crypto.PublicKey import RSA
+from Crypto.Hash      import SHA256
+from Crypto.Signature import pkcs1_15
+
+
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog='Solver for SBD Laboratory Task 18/20',
+        epilog='Copyright 2023 Thomas Gingele https://github.com/B1TC0R3'
+    )
+
+    parser.add_argument(
+        '-priv',
+        '--private-key',
+        help='a RSA private key file',
+        required=True
+    )
+    
+    parser.add_argument(
+        '-pub',
+        '--public-key',
+        help='a RSA public key file',
+        required=True
+    )
+
+    return parser.parse_args()
+
+
+def openssl_format(value: int) -> str:
+    return hex(value)[2:].upper()
+
+
+def main():
+    args        = get_args()
+    private_key = None
+    public_key = None
+
+    with open(args.private_key) as key_file:
+        private_key = RSA.import_key(key_file.read())
+
+    with open(args.public_key) as key_file:
+        public_key = RSA.import_key(key_file.read())
+
+    signer    = pkcs1_15.new(private_key)
+    verifier  = pkcs1_15.new(public_key)
+
+    # Remove prepending '0x' from hex string and uppercase it to match OpenSSL output
+    modulus   = openssl_format(private_key.n)
+    public_exponent = openssl_format(private_key.d)
+    private_exponent = openssl_format(private_key.e)
+
+    data      = SHA256.new(modulus.encode('utf-8'))
+    signature = signer.sign(data)
+    b64_sign  = base64.b64encode(signature).decode('utf-8')
+
+    # This will raise a 'ValueError' if the signature is invalid
+    verifier.verify(data, signature)
+
+    print(f"MODULUS: {modulus}\n")
+    print(f"PUBLIC EXPONENT: {public_exponent}\n")
+    print(f"PRIVATE EXPONENT: {private_exponent}\n")
+    print(f"SIGNATURE: {b64_sign}\n")
+
+
+if __name__ == '__main__':
+    main()
+```
+
+## Task 21
+
+The modulus can be extracted from a private key file with `openssl`.
+
+```bash
+openssl rsa -in myprivate.pem -noout -modulus
+```
+
+This value can then be signed using the same configuration as in the Python script.
+
+```bash
+echo -n "B13A3046809398DEC4756A11AE6CFC3DB609550A23457A5FAC1478BC4E889B2798A5E98E0F693B7F7F7ADF4BAD493084755194133C87FD4A69B103C148DEF7BEA3B1857F58EB13624D763D74D408133EBF51DA078033D11292D0E61992BB59ED2B1F8F89FBFE33A96A8CF6F95F2DA17C4B32F5CC7EC4AAC9D80DD1164FBB0BE6D2D04766C47D76E62C82923BB57D033BF54E6573682905A0A999A53A018A0AAF9A2C022DACCE6674595EF7BBB2D6A5AE2A5698BC2D0C6A92AC4C45A588D9999E22D078F1BF27C54C3F4A46769D658CD3E90D0D3EC960E5B2013BD1DFE7765399CF2EAB6897209ABFA36D7BA69C469636A1849561D15CEA910511F34CE73138F1" | openssl dgst -sha256 -sign myprivate.pem -out signature.sha256
+
+# Additionally base64 encode the signature
+cat signature.sha256 | base64 > signature.txt
+```
+
+## Task 22
+
+The signature produced and validated by the Python script is the same as the signature
+contained in `signature.txt`.
+
+```text
+asLKttVADwMG+L8FqPih7oKg9WbBdHEeACgW7Yx/GE4cWPZUkZtTk+lJPOGLWqWoJmN46ZHfkI7WBNK5YHdBnUQjgSsS1PuraSYqoIWRUqOksWllshvxwF6jKk6TCzvJBT5jmPx9xV0nEmnNZuYFyOJm4r8w1yKo+HerAdidXzqTjkNH6HcHJHl3mjWVDecadNHABEVKjS5KHM45YTIj9idZHxUbfaiDbacHQmtVqeZDMypQsL3kNLbDOxWqIQ9D7qOWCoMFzmcSDOJnB9YRDWlo77nWazYvx7hRMcMs8X3s6wCy0C5AGjuCbrydXjzckz9yxksSIs77TMZSilX1sA==
+```
