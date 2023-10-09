@@ -284,6 +284,8 @@ No answer needed.
 
 No answer needed.
 
+> TODO: Task 7, Page 10 of assignment -> I don't get the question
+
 ### Task 5
 
 1. *How could an intruder harm the security goal of confidentiality?*
@@ -325,6 +327,33 @@ For this example the string will decode to:
 leastsignificantbit:password
 ```
 
+Base64 works by taking any binary input and splitting it into a 6-bit character representation.
+Usually, this is used when it is necessary to transfer binary files like images via text,
+but it has also been adapted for encoding of large junks of text data, like cookies or some
+headers in HTTP/S requests.
+
+However, Base64 has one flaw: If the original size of the binary data is not a multiple
+of three, there may be some empty bytes.
+This is solved by appending enough empty bytes to the end of the input
+to pad the data to a 3-byte-multiple.
+Since empty bytes cannot be natively encoded with Base64, they are represented through
+`=` signs at the end of the encoded data.
+
+HTTP Basic Authentication uses Base64 encoding to transfer a clients credentials
+through a request header called `Authorization`.
+This header contains the credentials in the following format:
+
+```text
+<username>:<password>
+```
+
+This is then encoded and prepended with the string "Basic" to let the server know what type of
+authorization is used. A full header would look like this:
+
+```text
+Authorization: Basic eW91d2lzaHRoaXN3YXNteXBhc3N3b3JkOmJ1dG5vcGUK
+```
+
 ### Task 3
 
 The following string needs to be decoded:
@@ -350,6 +379,20 @@ databasepassword
 ```
 
 ![Crypto Basics Task 3](./.img/crypt_basics_t3.png)
+
+When storing passwords using XOR, the key is repeated until it fits the length of the input.
+This lengthened key is then XORed with this input to create the cipher.
+
+XOR is a very simple encoding that simply compares both strings bit by bit and outputs `1` if the bits are *not* equal and `0` if they are.
+
+| Input Bit | Key Bit | Output Bit |
+|-----------|---------|------------|
+| 0         | 0       | 0          |
+| 0         | 1       | 1          |
+| 1         | 0       | 1          |
+| 1         | 1       | 0          |
+
+### Task 4
 
 # (A1) Injection
 
