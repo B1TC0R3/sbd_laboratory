@@ -114,62 +114,6 @@ No answer needed.
 
 ### Task 6
 
-Unmodified request:
-
-```text
-POST /WebGoat/HttpProxies/intercept-request HTTP/1.1
-Host: localhost:8080
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
-Accept: */ *
-Accept-Language: en-US,en;q=0.5
-Accept-Encoding: gzip, deflate, br
-Content-Type: application/x-www-form-urlencoded; charset=UTF-8
-X-Requested-With: XMLHttpRequest
-Content-Length: 15
-Origin: http://localhost:8080
-Connection: close
-Referer: http://localhost:8080/WebGoat/start.mvc
-Cookie: JSESSIONID=e3dHiM5wF8CB2DJW6Sb_K1NAYbCAcl3W8PONY_oD; WEBWOLFSESSION=YR6BTRUQH_89HzCbp9q68HiWVQGdYCgWyDWVW7UL
-Sec-Fetch-Dest: empty
-Sec-Fetch-Mode: cors
-Sec-Fetch-Site: same-origin
-
-changeMe=haxx0r
-```
-
-An explanation of the individual headers:
-
-- `Host` -> This is the websites host. In this case `localhost` as the application is hosted locally.
-- `User-Agent` -> Contains some basic information about the program that is being used to interact with the website. This may help with displaying the website correctly.
-- `Accept` -> This is the media type that the browser will accept in the response.
-- `Accept-Language` -> This is the language/s that the browser will accept in the response.
-- `Accept-Encoding` -> These are the different types of encoding that the browser will accept in the response.
-- `Content-Type` -> Describes what format is used to send data to the server. Only used in POST/PUT requests.
-- `Origin` -> Enables Cross-Origin Resource Sharing, allowing a client to access otherwise restricted resources from a different domain then the resource is hosted on.
-- `Connection` -> Decides whether the connection with the web server should be held open or be closed.
-- `Referer` -> The URL at which the client was located when sending the request.
-- `Cookie` -> Contains one or more cookie/s previously set by a `Set-Cookie` header by the server. Cookies have multiple purposes from serving as credentials to preventing basic brute force attacks and more.
-- `Sec-Fetch-Dest` -> Can be used to let the server know what the response will be used for. This can help with formatting the reponse for the expected use case on the server.
-- `Sec-Fetch-Mode` -> This header is used to distinguish between different uses for the response, for example whether it is for a user navigating a website or to load an image and so on.
-- `Sec-Fetch-Site` -> Through this header, a client can tell the server whether a request is coming from the site itself, from a different site or from a completely user-generated request.
-
-WebGoat is using **Javascript** and **Java 17/Maven**.
-
-Exposed Javascript frameworks:
-
-- Backbone.js 1.4.0
-- RequireJS 2.3.6
-
-Exposed Javascript Libraries:
-
-- jQuery 3.5.1
-- jQuery UI 1.10.4
-- Underscore.js version unknown
-
-The name if the input field used to for the task is `changeMe`.
-
-Modified request:
-
 ```text
 GET /WebGoat/HttpProxies/intercept-request?changeMe=Requests%20are%20tampered%20easily HTTP/1.1
 Host: localhost:8080
@@ -194,29 +138,6 @@ x-request-intercepted:true
 
 No answer needed for the task.
 
-When intercepting the request that was earlier used to send a mail to WebWolf and
-changing the target address to `idont@exist.welp`, the reponse looks like this:
-
-```text
-HTTP/1.1 200 OK
-Connection: close
-X-XSS-Protection: 1; mode=block
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-Content-Type: application/json
-Date: Mon, 09 Oct 2023 18:50:57 GMT
-
-{
-  "lessonCompleted" : false,
-  "feedback" : "Of course you can send mail to user idont however you will not be able to read this e-mail in WebWolf, please use your own username.",
-  "output" : null,
-  "assignment" : "MailAssignment",
-  "attemptWasMade" : false
-}
-```
-
-![HTTP Proxies Task 7](./.img/http_proxies_t7.png)
-
 ### Task 8
 
 No answer needed.
@@ -238,7 +159,6 @@ No answer needed.
 ### Task 2
 
 No answer needed.
-
 
 ### Task 3
 
@@ -284,8 +204,6 @@ No answer needed.
 
 No answer needed.
 
-> TODO: Task 7, Page 10 of assignment -> I don't get the question
-
 ### Task 5
 
 1. *How could an intruder harm the security goal of confidentiality?*
@@ -326,18 +244,6 @@ For this example the string will decode to:
 ```text
 leastsignificantbit:password
 ```
-
-Base64 works by taking any binary input and splitting it into a 6-bit character representation.
-Usually, this is used when it is necessary to transfer binary files like images via text,
-but it has also been adapted for encoding of large junks of text data, like cookies or some
-headers in HTTP/S requests.
-
-However, Base64 has one flaw: If the original size of the binary data is not a multiple
-of three, there may be some empty bytes.
-This is solved by appending enough empty bytes to the end of the input
-to pad the data to a 3-byte-multiple.
-Since empty bytes cannot be natively encoded with Base64, they are represented through
-`=` signs at the end of the encoded data.
 
 HTTP Basic Authentication uses Base64 encoding to transfer a clients credentials
 through a request header called `Authorization`.
