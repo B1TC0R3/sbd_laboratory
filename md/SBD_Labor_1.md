@@ -114,6 +114,55 @@ body of the request. Note, that this answer is also randomly generated each time
 
 I did not understand this task. (TODO)
 
+Confidentiality
+Attack:
+- Interception / Eavesdropping
+- Spoofing of recipient information
+- Direct access to sensitive information through OsInt/Exploitation
+
+Defense:
+- data encryption
+- Authentication
+    - MFA 
+    - Biometric Authentication
+    - Securely stored passwords
+- Access Control
+- Minimizing the surface for information discovery
+- Physical Security Measures
+    - Security Measures: Protect from unauthorized access
+    - Safety Measures: Protect from catastrophies (e.g. fires, floods, ...)
+
+
+Integrity
+Attack:
+- Human Error during data input
+- Technical errors during data transmission
+- Software Bugs/Vulnerabilities
+- Hardware Bugs/Vulnerabilities
+- Unauthorized access to sensitive information through OsInt/Exploitation
+
+Defense:
+- Authentication
+- Access Control
+- Integrity Validation through Hashing
+- Backups
+- Redundant Systems/Storage
+- Auditing
+- Logging
+
+
+Availability
+Attack:
+- Denial of Service (DoS)
+- Distributed Denial of Service (DDoS)
+- Network traffic control
+- Firewalls
+- Physical Security Measures
+- Hardware Maintenance
+- Reduntant Systems/Storage
+
+Defense:
+
 ## Task 8
 
 1. *How could an intruder harm the security goal of confidentiality?*
