@@ -1,5 +1,5 @@
 ---
-title: "SBD Laboratory - Solutions"
+title: "SBD Laboratory One - Solutions"
 author: [Thomas Gingele]
 date: "2023-10-09"
 ---
@@ -29,7 +29,7 @@ changeMe=haxx0r
 
 ## Aufgabe 2
 
-- `Host` -> This is the websites host. In this case `localhost` as the application is hosted locally.
+- `Host` -> This is the websites host. In this case `localhost` is displayed, as the application is hosted locally.
 - `User-Agent` -> Contains some basic information about the program that is being used to interact with the website. This may help with displaying the website correctly.
 - `Accept` -> This is the media type that the browser will accept in the response.
 - `Accept-Language` -> This is the language/s that the browser will accept in the response.
@@ -112,56 +112,7 @@ body of the request. Note, that this answer is also randomly generated each time
 
 ## Task 7
 
-I did not understand this task. (TODO)
-
-Confidentiality
-Attack:
-- Interception / Eavesdropping
-- Spoofing of recipient information
-- Direct access to sensitive information through OsInt/Exploitation
-
-Defense:
-- data encryption
-- Authentication
-    - MFA 
-    - Biometric Authentication
-    - Securely stored passwords
-- Access Control
-- Minimizing the surface for information discovery
-- Physical Security Measures
-    - Security Measures: Protect from unauthorized access
-    - Safety Measures: Protect from catastrophies (e.g. fires, floods, ...)
-
-
-Integrity
-Attack:
-- Human Error during data input
-- Technical errors during data transmission
-- Software Bugs/Vulnerabilities
-- Hardware Bugs/Vulnerabilities
-- Unauthorized access to sensitive information through OsInt/Exploitation
-
-Defense:
-- Authentication
-- Access Control
-- Integrity Validation through Hashing
-- Backups
-- Redundant Systems/Storage
-- Auditing
-- Logging
-
-
-Availability
-Attack:
-- Denial of Service (DoS)
-- Distributed Denial of Service (DDoS)
-- Network traffic control
-- Firewalls
-- Physical Security Measures
-- Hardware Maintenance
-- Reduntant Systems/Storage
-
-Defense:
+![SBD Laboratory Task 7](./.img/sbd_lab_1_t7.png)
 
 ## Task 8
 
@@ -192,7 +143,7 @@ headers in HTTP/S requests.
 
 Base64 has one flaw: If the original size of the binary data is not a multiple
 of three, there may be some empty bytes.
-This is solved by appending enough empty bytes to the end of the input
+This is solved by appending enough bytes with a value of `0` to the end of the input
 to pad the data to a 3-byte-multiple.
 Since empty bytes cannot be natively encoded with Base64, they are represented through
 `=` signs at the end of the encoded data.
@@ -244,6 +195,7 @@ The script can be found on my Github as well: [xor\_plaintext\_attack - Github](
 ```python
 # Copyright 2023 Thomas Gingele https://github.com/B1TC0R3
 import argparse
+import base64
 
 
 def get_args() -> argparse.Namespace:
@@ -277,12 +229,14 @@ def xor(cipher, key) -> bytearray:
 
 
 def main():
-    args      = get_args()
-    cipher    = args.cipher.encode('utf-8')
-    plaintext = args.plaintext.encode('utf-8')
-    key       = str(xor(cipher, plaintext), 'utf-8')
+    args       = get_args()
+    cipher     = args.cipher.encode()
+    plaintext  = args.plaintext.encode()
+    key        = str(xor(cipher, plaintext), 'utf-8')
+    b64_cipher = base64.b64encode(cipher).decode()
 
-    print(key)
+    print(f"KEY: {key}")
+    print(f"BASE64 CIPHER: {b64_cipher}")
 
 
 if __name__ == '__main__':
@@ -325,12 +279,12 @@ There are two approches to cracking hashes:
 
 1. Looking up the hash in an online database.
 This method only works on non-salted hashes and is also ineffective against more modern
-hashing methods like `bcrypt`.
+hashing methods like `bcrypt` due to how long this hash type takes to digest.
 
 2. Cracking the hash with a wordlist or rainbowtable.
-With this approach, it may be easier to get a result but the success rate is higher.
+With this approach, it may be easier to get a result but at the cost of time.
 It is possible to attack salted hashes using rainbow tables and the hash method does not matter either.
-The biggest downside of cracking a hash like this is the time required to finish the computation,
+The biggest downside of cracking a hash like this is the duration required to finish the computation,
 as brute forcing tends to be rather slow.
 
 ## Task 17
