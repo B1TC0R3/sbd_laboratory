@@ -1,5 +1,5 @@
 ---
-title: "Design Sicherer Systeme - Labor Lösungen"
+title: "WebGoat - Solutions"
 author: [Thomas Gingele]
 date: "2023-10-09"
 ---
