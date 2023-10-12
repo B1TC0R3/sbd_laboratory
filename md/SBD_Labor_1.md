@@ -35,6 +35,8 @@ changeMe=haxx0r
 - `Accept-Language` -> This is the language/s that the browser will accept in the response.
 - `Accept-Encoding` -> These are the different types of encoding that the browser will accept in the response.
 - `Content-Type` -> Describes what format is used to send data to the server. Only used in POST/PUT requests.
+- `X-Requested-With` -> Used to identify some special types of request, like requests made with *Ajax* or *Android*.
+- `Content-Length` -> The size of the request body in bytes.
 - `Origin` -> Enables Cross-Origin Resource Sharing, allowing a client to access otherwise restricted resources from a different domain then the resource is hosted on.
 - `Connection` -> Decides whether the connection with the web server should be held open or be closed.
 - `Referer` -> The URL at which the client was located when sending the request.
