@@ -165,3 +165,31 @@ The username is "*user*".
 The client ID is "*my-client-with-secret*".
 
 ## Task 8
+
+1. Change the logged in user to `Tom` in the top right of the task frame.
+
+![Vote Fraud Step 1](.img/vote_fraud_1.png)
+
+2. Intercept the response to the request that is send when pressing the button.
+
+![Vote Fraud Step 2](.img/vote_fraud_2.png)
+
+3. Extract the token from the `access_token` cookie.
+
+![Vote Fraud Step 3](.img/vote_fraud_3.png)
+
+4. Then, brute force the secret with `john`
+
+```bash
+echo "<token>" > jwt.txt
+
+john --wordlist=<...>/rockyou.txt --format=HMAC-SHA512 jwt.txt
+```
+
+5. The token secret is `victory`. Using this, a new token can be created. Set the `admin` field to `true` and the `user` field to `Admin`.
+
+![Vote Fraud Step 5](.img/vote_fraud_4.png)
+
+6. Intercept the request that is send out when pressing the gargabe bin button next to the user switch button. This will send a POST request to delete all votes. Then, replace the cookie `access_token` with the new admin-token that has just been created. Sending this modified request should result in all votes being removed.
+
+![Vote Fraud Step 6](.img/vote_fraud_5.png)

@@ -496,22 +496,32 @@ Change the logged in user to `Tom` in the top right of the task frame.
 
 ![Vote Fraud Step 1](.img/vote_fraud_1.png)
 
-Intercept the request.
+Intercept the response to the request that is send when pressing the button.
 
 ![Vote Fraud Step 2](.img/vote_fraud_2.png)
 
-Extract the token from the `access_token` cookie:
-
-```
-eyJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE2OTgzMT
-I4NjUsImFkbWluIjoiZmFsc2UiLCJ1c2VyIjoiV
-G9tIn0.tkzPdgC90zJDBeuhogbrky_Z47fgl8g0
-Bdvx795EA--O7co79r00lax3P47xQijFV2f28G0
-a6DL_mduk4x0wqQ
-```
-
-Split the token into its parts and decode it.
-Note, that a decoding error at the end of the payload string has been fixed manually by appending a missing `=`
-at the end of the payload string.
+Extract the token from the `access_token` cookie.
 
 ![Vote Fraud Step 3](.img/vote_fraud_3.png)
+
+Then, brute force the secret with `john`
+
+```bash
+echo "<token>" > jwt.txt
+
+john --wordlist=<...>/rockyou.txt --format=HMAC-SHA512 jwt.txt
+```
+
+The token secret is `victory`.
+Using this, a new token can be created.
+Set the `admin` field to `true` and the `user` field to `Admin`.
+
+![Vote Fraud Step 4](.img/vote_fraud_4.png)
+
+Intercept the request that is send out when pressing the gargabe bin button next to the user switch button.
+This will send a POST request to delete all votes.
+Then, replace the cookie `access_token` with the new admin-token that has just been created.
+
+Sending this modified request should result in all votes being removed.
+
+![Vote Fraud Step 5](.img/vote_fraud_5.png)
