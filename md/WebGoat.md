@@ -4,7 +4,7 @@ author: [Thomas Gingele]
 date: "2023-10-09"
 ---
 
-I would like to metion that I will be using **Burpsuite** instead of **OWASP ZAProxy**
+I would like to mention that I will be using **Burpsuite** instead of **OWASP ZAProxy**
 for the majority of the tasks. Please feel free to follow the tutorials provided by
 WebGoat if you are not comfortable with this tool.
 
@@ -525,3 +525,64 @@ Then, replace the cookie `access_token` with the new admin-token that has just b
 Sending this modified request should result in all votes being removed.
 
 ![Vote Fraud Step 5](.img/vote_fraud_5.png)
+
+### Task 6
+
+No answer needed.
+
+### Task 7
+
+1. *1. What is the result of the first code snippet?*
+
+Solution 1: Throws an exception in line 12.
+
+2. *What is the result of the second code snippet?*
+
+Solution 3: Logs an error in line 9.
+
+### Task 8
+
+Bruteforce the token with `john`:
+
+```bash
+john --wordlist=<...>/rockyou.txt --format=HMAC-SHA256 jwt.txt
+```
+
+The secret key is `business`.
+
+Change the username of the token here: [jwt.io](https://jwt.io/)
+Also update the expiration date to a point in the future if necessary.
+Then submit the new token.
+
+![Broken Authentication Task 8](.img/broken_auth_t8.png)
+
+### Task 9
+
+No answer needed.
+
+### Task 10
+
+Visit `http://localhost:8080/WebGoat/images/logs.txt` and extract the old token.
+
+```
+eyJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE1MjYxMz
+E0MTEsImV4cCI6MTUyNjIxNzgxMSwiYWRtaW4iO
+iJmYWxzZSIsInVzZXIiOiJUb20ifQ.DCoaq9zQk
+yDH25EcVWKcdbyVfUL4c9D4jRvsqOqvi9iAd4Qu
+qmKcchfbU8FNzeBNF9tLeFXHZLU4yRkq-bjm7Q
+```
+
+Use any Base64 de-/encoder to change the token algorithm to "*none*".
+Base64 padding has been added to the original strings to make editing the text easier.
+
+![Remove signing algorithm](.img/broken_auth_t10_1.png)
+
+Increase the expiration date to some point in the future.
+Base64 padding has been added to the original strings to make editing the text easier.
+
+![Increase expiration date of the JW-Token](.img/broken_auth_t10_2.png)
+
+Insert the token into the original requests `Authorization` header.
+After submitting the request, the task should be complete.
+
+![Update the original request](.img/broken_auth_t10_3.png)

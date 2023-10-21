@@ -218,8 +218,7 @@ The first snippet throws an `InvalidTokenException`, as the string passed to the
 `parseClaimsJws()` method cannot be a full token, but only the claims.
 
 The second snipped will work as intended and deny the action while logging the error message
-"*You are not an admin user*". This is because the class will not accept the `alg: none` setting
-and attempt to validate the token using `JWT_PASSWORD` regardeless.
+"*You are not an admin user*". This is because the class will not accept the `alg: none` setting.
 
 Documentation for these methods was obtained here:
 
@@ -354,4 +353,63 @@ if __name__ == "__main__":
 
 ## Task 12
 
+An access token is used to make API calls to a server or preform similar actions that require authentication.
+Once this token expires, a refresh token can be used to ask the server for a new access token.
+Since refresh tokens have a much longer lifespan then access tokens, they remove the need for a user to enter their credentials too often.
 
+## Task 13
+
+Refresh tokens allow for access tokens with very limited lifetime, which means that even if an attacker gets to control one of them, the will expire after a few minutes.
+For this reason, refresh tokens need to be much better secured then the access tokens.
+
+It is also rather important to keep track of what refresh token belongs to what access token, as this can otherwise be abused by an adversary to use a compromised, low privilege refresh token to
+request a high privilege access token.
+
+Another problem is the storage location of the refresh token. Since it has to be stored in the same location as the access token, compromising the later often also means
+gaining control over the other.
+
+Refresh tokens should be stored in a hashed for if they are used for vaidation.
+
+## Task 14
+
+- Article : [JWT Refresh Manipulation - emtunc.org](https://emtunc.org/blog/11/2017/jwt-refresh-token-manipulation/)
+
+The blog describes a vulnerability through which it became possible to request a new access token of a different user.
+Requirements were access to an expired token of this target user and *any* valid refresh token.
+
+Since the server did not check whether the refresh token and access token belonged to the same user,
+requesting a refresh of the expired access token of the target user with the refresh token of the attacking user would
+grant the attacker an access token for the target user.
+
+Remediation is especially complicated in this case, since blacklisting or revoking a refresh token would not prevent the attacker from
+performing the same attack from another newly created account.
+
+Remediation is especially complicated in this case, since blacklisting or revoking a refresh token would not prevent the attacker from
+performing the same attack from another newly created account.
+
+## Task 15
+
+Visit `http://localhost:8080/WebGoat/images/logs.txt` and extract the old token.
+
+```
+eyJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE1MjYxMz
+E0MTEsImV4cCI6MTUyNjIxNzgxMSwiYWRtaW4iO
+iJmYWxzZSIsInVzZXIiOiJUb20ifQ.DCoaq9zQk
+yDH25EcVWKcdbyVfUL4c9D4jRvsqOqvi9iAd4Qu
+qmKcchfbU8FNzeBNF9tLeFXHZLU4yRkq-bjm7Q
+```
+
+Use any Base64 de-/encoder to change the token algorithm to "*none*".
+Base64 padding has been added to the original strings to make editing the text easier.
+
+![Remove signing algorithm](.img/broken_auth_t10_1.png)
+
+Increase the expiration date to some point in the future.
+Base64 padding has been added to the original strings to make editing the text easier.
+
+![Increase expiration date of the JW-Token](.img/broken_auth_t10_2.png)
+
+Insert the token into the original requests `Authorization` header.
+After submitting the request, the task should be complete.
+
+![Update the original request](.img/broken_auth_t10_3.png)
