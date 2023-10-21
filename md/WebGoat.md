@@ -573,7 +573,6 @@ qmKcchfbU8FNzeBNF9tLeFXHZLU4yRkq-bjm7Q
 ```
 
 Use any Base64 de-/encoder to change the token algorithm to "*none*".
-Base64 padding has been added to the original strings to make editing the text easier.
 
 ![Remove signing algorithm](.img/broken_auth_t10_1.png)
 
@@ -586,3 +585,51 @@ Insert the token into the original requests `Authorization` header.
 After submitting the request, the task should be complete.
 
 ![Update the original request](.img/broken_auth_t10_3.png)
+
+## Task 11
+
+First, intercept the request that is send out when pressing anyone of the "*Delete*" button.
+This request should contain Jerry's JWT.
+
+Mext, enter the token into [jwt.io](https://jwt.io).
+Change the name from "*Jerry*" to "*Tom*".
+
+After this, look at the KID.
+Through rather complicated error based SQLi probing, it is possible to figure out that this field
+is vulnerable to such attacks.
+
+The proof for this looks the following:
+
+Entering any string that is not `webgoat_key` will result in a return code of 500 when submitting
+the request with the new token.
+
+Entering the string `webgoat_key';--` will only give out the error, that the token is invalid, but
+not error out the server.
+
+Entering the string `webgoat' AND 1=1;--` will also compute without a server error.
+Another working example is `nopynope' OR 1=1;--`.
+
+This solidifies the assumption that the manually inserted SQL statements are not part of the
+string that is actually queried for in the database, as this should lead to a `500 - Internal Server Error` response.
+
+Time based SQLi is not possible  and leads to a `500`, confirmed with the following injection:
+
+```
+webgoat_key' AND sleep(10);--
+```
+
+The SQL query returns a single value.
+This can be confirmed with these statements:
+
+```
+webgoat_key' ORDER BY 1;--    This one works
+webgoat_key' ORDER BY 2;--    This one fails -> only one column
+```
+
+Since the KID is used to fetch a signing key from a database to verify the tokens signature
+on the server-side, it might be possible to inject a custom signing key.
+The basic syntax for this would look like this:
+
+```
+nonexistant_key' UNION SELECT 'injected_key';--
+```

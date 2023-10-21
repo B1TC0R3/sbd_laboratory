@@ -400,7 +400,6 @@ qmKcchfbU8FNzeBNF9tLeFXHZLU4yRkq-bjm7Q
 ```
 
 Use any Base64 de-/encoder to change the token algorithm to "*none*".
-Base64 padding has been added to the original strings to make editing the text easier.
 
 ![Remove signing algorithm](.img/broken_auth_t10_1.png)
 

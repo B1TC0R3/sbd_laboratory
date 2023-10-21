@@ -7,7 +7,7 @@ template = eisvogel.tex
 titlepagetextcolor   = ffffff
 titlepagebackground  = .img/titlepage_background_dark_logo.png
 
-format = --template $(template) --from markdown --listings -V titlepage=true -V titlepage-background=$(titlepagebackground) -V titlepage-text-color=$(titlepagetextcolor) -V toc-own-page=true
+format = --template $(template) --from markdown --listings -V titlepage=true -V titlepage-background=$(titlepagebackground) -V titlepage-text-color=$(titlepagetextcolor) -V titlepage-color=323232 -V toc-own-page=true
 
 all: webgoat sbd_labor_2
 
